@@ -1,19 +1,26 @@
-# Crónicas — dashboard de campanha
+# Crónicas — campanhas e personagens
 
-Interface estática sem dependências. Abrir index.html diretamente ou servir com qualquer servidor estático. GitHub Pages: Settings > Pages > Deploy from a branch > main > /(root).
+Aplicação estática. O Google Sheets privado guarda os registos; o Drive guarda imagens e backups. O dashboard importa biblioteca.json em memória, com seleção de campanha e grupo. Não envia dados pela rede nem usa localStorage. Imagens abrem por fileId no Drive.
 
-## Separação de responsabilidades
-- GitHub: apenas código e documentação técnica genérica.
-- Pages: interface pública, sem dados de campanha incorporados.
-- Google Drive: ficheiro campanha.json privado, mantido pelo ChatGPT através do plugin.
-- Dashboard: importar a cópia JSON descarregada do Drive. Exportar devolve uma cópia; não grava no Drive.
+## Contrato v2
 
-Não existe autenticação Google nem sincronização automática nesta versão. Nenhum token ou segredo deve entrar no repositório. Os dados importados são mantidos apenas em memória, descartados ao fechar/recarregar. Não há analytics, armazenamento local ou pedidos de rede pela aplicação.
+schemaVersion: 2; revision: inteiro não negativo; updatedAt: data ISO. Cada tabela abaixo corresponde a uma lista JSON. IDs únicos por lista. Tipos numéricos e booleanos devem ser preservados. Campos adicionais sobrevivem à exportação.
+- campaigns: id, title, system, revision, location, worldTime, resume, notes
+- characters: id, name, appearance, backstory, source
+- participants: id, campaignId, characterId, description, level, hp, maxHp, tempHp, ac, str, dex, con, int, wis, cha, cp, sp, ep, gp, pp, conditions, concentration, inspiration, skills, features, notes, verifiedAt
+- groups: id, campaignId, name, notes
+- memberships: id, groupId, participantId
+- spells: id, participantId, name, level, prepared, source, ability, notes
+- inventory: id, participantId, name, quantity, equipped, notes
+- resources: id, participantId, name, current, max, recovery, notes
+- sessions: id, campaignId, groupId, date, summary, changes, resume
+- quests: id, campaignId, title, status, notes
+- images: id, campaignId, characterId, sessionId, fileId, driveUrl, caption, prompt, references, createdAt
 
-## Contrato JSON (schemaVersion 1)
-Campos obrigatórios: schemaVersion=1; revision inteiro >=0; title texto; notes texto; characters, quests e sessions listas.
-Personagem: name texto, level/ac/hp/maxHp inteiros não negativos, hp <= maxHp, spells e inventory listas de texto. Opcionais: description, resources, abilities, notes (texto).
-Missão: title, status, notes (texto). Sessão: id, date, summary (texto). As listas podem estar vazias.
-updatedAt opcional, ISO 8601. Campos adicionais são preservados ao exportar. Usar IDs únicos para sessões e incrementar revision depois de cada gravação no Drive.
+Characters é identidade; Participants guarda estado independente por campanha. Groups combina Participants através de Memberships, com validação da campanha. Magias, equipamento e recursos pertencem a participantId. Não misturar estados entre campanhas. O formato v1 continua importável com preservação do snapshot original.
 
-Teste: node --test dashboard.test.cjs (colocado junto de index.html). Nenhum ficheiro real da campanha deve ser enviado para este repositório.
+## Executar e testar
+
+Servir esta pasta por HTTP. GitHub Pages: main, raiz. Sem dependências de execução. Testes: node --test library.test.mjs dashboard.test.cjs.
+
+Os registos não devem entrar no Git. O chat exporta as linhas do Sheets para biblioteca.json; o utilizador importa a cópia. Sem OAuth ou escrita automática no Sheets. Nunca publicar credenciais, snapshots privados ou imagens da campanha.
