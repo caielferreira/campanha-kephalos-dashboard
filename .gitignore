@@ -1,0 +1,7 @@
+qa-*.json
+biblioteca*.json
+campanha*.json
+*.png
+*.zip
+
+qa-*
